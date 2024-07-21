@@ -1,31 +1,41 @@
-const $app = document.getElementById('app');
-const $observe = document.getElementById('observe');
-const API = 'https://api.escuelajs.co/api/v1/products';
+import { getProducts, model } from './model/index'
+import { cardTemplate } from './templates/card.js'
 
-const getData = api => {
-  fetch(api)
-    .then(response => response.json())
-    .then(response => {
-      let products = response;
-      let output = products.map(product => {
-        // template
-      });
-      let newItem = document.createElement('section');
-      newItem.classList.add('Item');
-      newItem.innerHTML = output;
-      $app.appendChild(newItem);
-    })
-    .catch(error => console.log(error));
+const $app = document.getElementById('app')
+const $observe = document.getElementById('observe')
+
+const renderProducts = async () => {
+  try {
+    await getProducts()
+    if (!model.newProducts.length) return
+
+    const output = model.newProducts.map(cardTemplate).join('')
+
+    const itemsContainer = document.querySelector('.Items')
+
+    if (!itemsContainer) {
+      const newItem = document.createElement('section')
+      newItem.classList.add('Items')
+      newItem.innerHTML = output
+      $app.appendChild(newItem)
+    } else {
+      itemsContainer.insertAdjacentHTML('beforeend', output)
+    }
+  } catch (error) {
+    console.error(error)
+  }
 }
 
-const loadData = () => {
-  getData(API);
-}
+const intersectionObserver = new IntersectionObserver(
+  (entries) => {
+    const [entry] = entries
 
-const intersectionObserver = new IntersectionObserver(entries => {
-  // logic...
-}, {
-  rootMargin: '0px 0px 100% 0px',
-});
+    if (entry.isIntersecting) renderProducts()
+  },
+  {
+    rootMargin: '0px 0px 0px 0px',
+    threshold: 0.5,
+  }
+)
 
-intersectionObserver.observe($observe);
+intersectionObserver.observe($observe)
